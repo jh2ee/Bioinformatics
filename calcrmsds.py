@@ -40,9 +40,11 @@ from optparse import OptionParser
     
 #     return lrmsd, irmsd, fnat
 
-def runDockQ(pdb_fn, ref_fn, log_file='./rmsds/log.log'):
+
+def runDockQ(pdb_fn, ref_fn, mapping, log_file='./log.log'):
     lrmsd, irmsd, fnat, dockq = 9999, 9999, 0, 0
     cmd = f'DockQ --allowed_mismatches 20 {pdb_fn} {ref_fn}'
+    # cmd = f'DockQ --allowed_mismatches 20 {pdb_fn} {ref_fn} --mapping {mapping}'
     
     # 로그를 저장할 파일을 연다
     with open(log_file, 'w') as log:
@@ -174,7 +176,7 @@ def validate_pdb(pdb_path):
 
 
 # 상위 10개의 complex PDB에 대해 lrmsd, irmsd, fnat 계산
-def calculate_top_10_ranking_results(predict_sort_file, complex_dir, ref_pdb, output_file):
+def calculate_top_10_ranking_results(predict_sort_file, complex_dir, ref_pdb, output_file, mapping):
     top_10_pdbs = []
     with open(predict_sort_file, 'r') as file:
         for i, line in enumerate(file):
@@ -197,7 +199,7 @@ def calculate_top_10_ranking_results(predict_sort_file, complex_dir, ref_pdb, ou
             fixed_pdb_path = validate_pdb(temp_pdb_path)
 
             # DockQ 계산
-            lrmsd, irmsd, fnat, dockq = runDockQ(fixed_pdb_path, ref_pdb)
+            lrmsd, irmsd, fnat, dockq = runDockQ(fixed_pdb_path, ref_pdb, mapping)
             out_file.write(f"{pdb_name}\t{lrmsd}\t{irmsd}\t{fnat}\t{dockq}\n")
             print(f"Processed: {pdb_name} -> lrmsd: {lrmsd}, irmsd: {irmsd}, fnat: {fnat}, dockq: {dockq}")
 
@@ -212,6 +214,7 @@ parser.add_option("--complex_dir", help="Directory containing complex PDB files"
 parser.add_option("--ref_pdb", help="Path to reference (original) PDB file", dest="ref_pdb")
 parser.add_option("--output", help="Output file to store the results", dest="output")
 parser.add_option("--predict_sort", help="Path to the GNN_DOVE sorted Predict_sort.txt file", dest="predict_sort")
+parser.add_option("--mapping", help="Mapping chains for DockQ", dest="mapping")
 
 (options, args) = parser.parse_args()
 
@@ -219,4 +222,4 @@ if not options.complex_dir or not options.ref_pdb or not options.output or not o
     print("Missing required arguments. Please refer to the usage instructions.")
     exit()
 
-calculate_top_10_ranking_results(options.predict_sort, options.complex_dir, options.ref_pdb, options.output)
+calculate_top_10_ranking_results(options.predict_sort, options.complex_dir, options.ref_pdb, options.output, options.mapping)

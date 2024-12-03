@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-def run_calcrmsds(pdb_id, ref_pdb, sequence):
+def run_calcrmsds(pdb_id, ref_pdb, sequence, mapping):
     """
     calcrmsds.py 스크립트를 자동으로 실행하는 함수
     Args:
@@ -9,17 +9,18 @@ def run_calcrmsds(pdb_id, ref_pdb, sequence):
     - ref_pdb: 참조 PDB 경로
     - sequence: 서열 정보
     """
-    complex_dir = f"./mnt/PDD_output/{pdb_id}_pep_pro_output/decoys/{sequence}_1"
+    complex_dir = f"./mnt/PDD_output/{pdb_id}_pep_pro_output/decoys/{sequence}_2"
     ref_pdb_path = f"./mnt/PDD_input/{ref_pdb}.pdb"
-    output = f"./rmsds/{pdb_id}.txt"
-    predict_sort = f"./mnt/PDD_output/{pdb_id}_pep_pro_output/decoys/{sequence}_1/Predict_Result/Multi_Target/Fold_1_Result/{sequence}_1/Predict_sort.txt"
+    output = f"./rnk_full_rmsds.ver2/{pdb_id}.txt"
+    predict_sort = f"./mnt/PDD_output/{pdb_id}_pep_pro_output/decoys/{sequence}_2/Predict_Result/Multi_Target/Fold_1_Result/{sequence}_2/Predict_sort.txt"
 
     cmd = [
         'python', 'calcrmsds.py',
         '--complex_dir', complex_dir,
         '--ref_pdb', ref_pdb_path,
         '--output', output,
-        '--predict_sort', predict_sort
+        '--predict_sort', predict_sort,
+        '--mapping', mapping
     ]
 
     # subprocess로 커맨드 실행
@@ -44,16 +45,21 @@ def process_text_file(file_path):
                 continue
 
             ref_pdb = parts[0].replace(':', '')  # 1열 값에서 ':' 제거
+            ref_map = ref_pdb.split('_')[1] # ex) 1dkd_EA -> EA
+
             pdb_id = parts[1]  # 2열 값
+            pdb_map = pdb_id.split('_')[1] + 'X' # ex) 1kid_A -> AX
+
             sequence = parts[3]  # 4열 값
+            mapping = ref_map + ':' + pdb_map
 
             # run_calcrmsds 함수 호출
-            run_calcrmsds(pdb_id, ref_pdb, sequence)
+            run_calcrmsds(pdb_id, ref_pdb, sequence, mapping)
 
 
 if __name__ == "__main__":
     # 텍스트 파일 경로
-    text_file_path = 'pepnew' 
+    text_file_path = 'peppro-exsitunbound_seq_len_le15.list' 
 
     # 텍스트 파일 처리
     process_text_file(text_file_path)
